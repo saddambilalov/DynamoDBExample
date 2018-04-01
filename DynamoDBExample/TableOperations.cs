@@ -2,8 +2,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.DocumentModel;
+using Amazon.DynamoDBv2.Model;
 using DynamoDBExample.Models;
 
 namespace DynamoDBExample
@@ -53,7 +55,74 @@ namespace DynamoDBExample
                 new ScanCondition("Price", ScanOperator.LessThan, price),
                 new ScanCondition("PageCount", ScanOperator.Equal, 500)
             );
-            Console.WriteLine("\nFindProductsPricedLessThanZero: Printing result.....");
+
+            Console.WriteLine("\nRetrieveBooksPricedLessThanThirty: Printing result.....");
+
+            foreach (var r in itemsWithWrongPrice)
+            {
+                Console.WriteLine("{0}\t{1}\t{2}\t{3}", r.Id, r.Title, r.Price, r.ISBN);
+            }
+        }
+
+        public static void RetrieveBooksdWithinScan(this DynamoDBContext context,
+            string title)
+        {
+            const double priceFirst = 0;
+            const double priceSecond = 30;
+
+            var itemsWithWrongPrice = context.Scan<Book>(new ScanCondition(title, ScanOperator.Between, priceFirst, priceSecond));
+
+            Console.WriteLine("\nFindRepliesPostedWithinTimePeriod: Printing result.....");
+
+            foreach (var r in itemsWithWrongPrice)
+            {
+                Console.WriteLine("{0}\t{1}\t{2}\t{3}", r.Id, r.Title, r.Price, r.ISBN);
+            }
+        }
+
+        public static void FindRepliesInLast3000Days(this DynamoDBContext context,
+            string forumName,
+            string threadSubject)
+        {
+            var replyId = forumName + "#" + threadSubject;
+            var twoWeeksAgoDate = DateTime.UtcNow - TimeSpan.FromDays(3000);
+            var latestReplies =
+                context.Query<Reply>(replyId, QueryOperator.GreaterThan, twoWeeksAgoDate);
+
+            Console.WriteLine("\nFindRepliesInLast15Days: Printing result.....");
+
+            foreach (var r in latestReplies)
+            {
+                Console.WriteLine("{0}\t{1}\t{2}\t{3}", r.Id, r.PostedBy, r.Message, r.ReplyDateTime);
+            }
+        }
+
+        public static void RetrieveBooksdWithinQuery(this DynamoDBContext context,
+              string title)
+        {
+            var request = new QueryRequest
+            {
+                TableName = "ProductCatalog",
+                KeyConditions = new Dictionary<string, Condition>
+                {
+                    {
+                        title,
+                        new Condition
+                        {
+                            ComparisonOperator = ComparisonOperator.EQ,
+                            AttributeValueList = new List<AttributeValue>
+                            {
+                                new AttributeValue { N = "1" }
+                            }
+                        }
+                    }
+                }
+            };
+
+            var itemsWithWrongPrice = context.Query<Book>(request);
+
+            Console.WriteLine("\nFindRepliesPostedWithinTimePeriod: Printing result.....");
+
             foreach (var r in itemsWithWrongPrice)
             {
                 Console.WriteLine("{0}\t{1}\t{2}\t{3}", r.Id, r.Title, r.Price, r.ISBN);

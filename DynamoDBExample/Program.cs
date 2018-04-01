@@ -15,12 +15,17 @@ namespace DynamoDBExample
             {
                 using (var client = new AmazonDynamoDBClient())
                 {
+                    //client.CreateExampleTable(TableName);
+
                     using (var context = new DynamoDBContext(client))
                     {
-                        context.RetrieveBooksPricedLessThanThirty();
+                        // Sample queries.
+                        context.FindRepliesInLast3000Days("Amazon DynamoDB", "DynamoDB Thread 1");
+
+                        //context.RetrieveBooksdWithinQuery("Id");
                         for (var index = 1; index <= 2; index++)
                         {
-                            //context.CreateBookItem(index);
+                            // context.CreateBookItem(index);
                             //context.RetrieveBook(index);
 
                             //Couple of sample updates.

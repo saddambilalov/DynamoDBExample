@@ -5,18 +5,9 @@ using Amazon.DynamoDBv2.Model;
 
 namespace DynamoDBExample
 {
-    public class LowLevelTable
+    public static class LowLevelTable
     {
-        private readonly AmazonDynamoDBClient _client;
-        private readonly string _tableName;
-
-        public LowLevelTable(AmazonDynamoDBClient client, string tableName)
-        {
-            _client = client;
-            _tableName = tableName;
-        }
-
-        public void CreateExampleTable()
+        public static void CreateExampleTable(this AmazonDynamoDBClient client, string tableName)
         {
             Console.WriteLine("\n*** Creating table ***");
             var request = new CreateTableRequest
@@ -27,6 +18,11 @@ namespace DynamoDBExample
                 {
                     AttributeName = "Id",
                     AttributeType = "N"
+                },
+                new AttributeDefinition
+                {
+                    AttributeName = "PageCount",
+                    AttributeType = "N"
                 }
             },
                 KeySchema = new List<KeySchemaElement>
@@ -35,6 +31,11 @@ namespace DynamoDBExample
                 {
                     AttributeName = "Id",
                     KeyType = "HASH" //Partition key
+                },
+                new KeySchemaElement
+                {
+                    AttributeName = "PageCount",
+                    KeyType = "RANGE" //Partition key
                 }
             },
                 ProvisionedThroughput = new ProvisionedThroughput
@@ -42,10 +43,10 @@ namespace DynamoDBExample
                     ReadCapacityUnits = 5,
                     WriteCapacityUnits = 6
                 },
-                TableName = _tableName
+                TableName = tableName
             };
 
-            var response = _client.CreateTable(request);
+            var response = client.CreateTable(request);
 
             var tableDescription = response.TableDescription;
             Console.WriteLine("{1}: {0} \t ReadsPerSec: {2} \t WritesPerSec: {3}",
@@ -55,12 +56,12 @@ namespace DynamoDBExample
                       tableDescription.ProvisionedThroughput.WriteCapacityUnits);
 
             string status = tableDescription.TableStatus;
-            Console.WriteLine(_tableName + " - " + status);
+            Console.WriteLine(tableName + " - " + status);
 
-            WaitUntilTableReady(_tableName);
+            client.WaitUntilTableReady(tableName);
         }
 
-        public void ListMyTables()
+        public static void ListMyTables(this AmazonDynamoDBClient client, string tableName)
         {
             Console.WriteLine("\n*** listing tables ***");
             string lastTableNameEvaluated = null;
@@ -72,7 +73,7 @@ namespace DynamoDBExample
                     ExclusiveStartTableName = lastTableNameEvaluated
                 };
 
-                var response = _client.ListTables(request);
+                var response = client.ListTables(request);
                 foreach (string name in response.TableNames)
                     Console.WriteLine(name);
 
@@ -80,15 +81,15 @@ namespace DynamoDBExample
             } while (lastTableNameEvaluated != null);
         }
 
-        public void GetTableInformation()
+        public static void GetTableInformation(this AmazonDynamoDBClient client, string tableName)
         {
             Console.WriteLine("\n*** Retrieving table information ***");
             var request = new DescribeTableRequest
             {
-                TableName = _tableName
+                TableName = tableName
             };
 
-            var response = _client.DescribeTable(request);
+            var response = client.DescribeTable(request);
 
             TableDescription description = response.Table;
             Console.WriteLine("Name: {0}", description.TableName);
@@ -99,12 +100,12 @@ namespace DynamoDBExample
                       description.ProvisionedThroughput.WriteCapacityUnits);
         }
 
-        public void UpdateExampleTable()
+        public static void UpdateExampleTable(this AmazonDynamoDBClient client, string tableName)
         {
             Console.WriteLine("\n*** Updating table ***");
             var request = new UpdateTableRequest()
             {
-                TableName = _tableName,
+                TableName = tableName,
                 ProvisionedThroughput = new ProvisionedThroughput()
                 {
                     ReadCapacityUnits = 6,
@@ -112,25 +113,25 @@ namespace DynamoDBExample
                 }
             };
 
-            _client.UpdateTable(request);
+            client.UpdateTable(request);
 
-            WaitUntilTableReady(_tableName);
+            client.WaitUntilTableReady(tableName);
         }
 
-        public void DeleteExampleTable()
+        public static void DeleteExampleTable(this AmazonDynamoDBClient client, string tableName)
         {
             Console.WriteLine("\n*** Deleting table ***");
             var request = new DeleteTableRequest
             {
-                TableName = _tableName
+                TableName = tableName
             };
 
-            _client.DeleteTable(request);
+            client.DeleteTable(request);
 
             Console.WriteLine("Table is being deleted...");
         }
 
-        public void WaitUntilTableReady(string tableName)
+        private static void WaitUntilTableReady(this AmazonDynamoDBClient client, string tableName)
         {
             string status = null;
             // Let us wait until table is created. Call DescribeTable.
@@ -139,7 +140,7 @@ namespace DynamoDBExample
                 System.Threading.Thread.Sleep(5000); // Wait 5 seconds.
                 try
                 {
-                    var res = _client.DescribeTable(new DescribeTableRequest
+                    var res = client.DescribeTable(new DescribeTableRequest
                     {
                         TableName = tableName
                     });
