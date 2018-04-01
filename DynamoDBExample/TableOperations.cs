@@ -1,31 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Amazon.DynamoDBv2;
+using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.DocumentModel;
+using DynamoDBExample.Models;
 
 namespace DynamoDBExample
 {
     public static class TableOperations
     {
         // Creates a sample book item.
-        public static void CreateBookItem(this Table productCatalog, int sampleBookId)
+        public static void CreateBookItem(this AmazonDynamoDBClient client, int sampleBookId)
         {
             Console.WriteLine("\n*** Executing CreateBookItem() ***");
-            var book = new Document
+            var book = new Book
             {
-                ["Id"] = sampleBookId,
-                ["Title"] = "Book " + sampleBookId,
-                ["Price"] = 19.99,
-                ["ISBN"] = "111-1111111111",
-                ["Authors"] = new List<string> { "Author 1", "Author 2", "Author 3" },
-                ["PageCount"] = 500,
-                ["Dimensions"] = "8.5x11x.5",
-                ["InPublication"] = new DynamoDBBool(true),
-                ["InStock"] = new DynamoDBBool(false),
-                ["QuantityOnHand"] = 0
+                Id = sampleBookId,
+                Title = "Book " + sampleBookId,
+                Price = 19.99,
+                ISBN = "111-1111111111",
+                BookAuthors = new List<string> { "Author 1", "Author 2", "Author 3" },
+                PageCount = 500,
+                Dimensions = "8.5x11x.5",
+                InPublication = true,
+                InStock = false,
+                QuantityOnHand = 0
             };
+            using (var context = new DynamoDBContext(client))
+            {
+                context.Save(book);
 
-            productCatalog.PutItem(book);
+            }
         }
 
         public static void RetrieveBook(this Table productCatalog, int sampleBookId)
@@ -51,7 +57,7 @@ namespace DynamoDBExample
             var book = new Document
             {
                 ["Id"] = partitionKey,
-                ["Authors"] = new List<string> {"Author x", "Author y"},
+                ["Authors"] = new List<string> { "Author x", "Author y" },
                 ["newAttribute"] = "New Value",
                 ["ISBN"] = null
             };
@@ -86,7 +92,7 @@ namespace DynamoDBExample
             var expr = new Expression
             {
                 ExpressionStatement = "Price = :val",
-                ExpressionAttributeValues = {[":val"] = 19.99}
+                ExpressionAttributeValues = { [":val"] = 19.99 }
             };
 
             // Optional parameters.
