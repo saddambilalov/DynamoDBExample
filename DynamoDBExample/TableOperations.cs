@@ -80,12 +80,11 @@ namespace DynamoDBExample
             }
         }
 
-        public static void FindRepliesInLast3000Days(this DynamoDBContext context,
-            string forumName,
-            string threadSubject)
+        public static void FindRepliesInLastNDays(this DynamoDBContext context,
+            int n)
         {
-            var replyId = forumName + "#" + threadSubject;
-            var twoWeeksAgoDate = DateTime.UtcNow - TimeSpan.FromDays(3000);
+            const string replyId = "Amazon DynamoDB#DynamoDB Thread 1";
+            var twoWeeksAgoDate = DateTime.UtcNow - TimeSpan.FromDays(n);
             var latestReplies =
                 context.Query<Reply>(replyId, QueryOperator.GreaterThan, twoWeeksAgoDate);
 
@@ -94,38 +93,6 @@ namespace DynamoDBExample
             foreach (var r in latestReplies)
             {
                 Console.WriteLine("{0}\t{1}\t{2}\t{3}", r.Id, r.PostedBy, r.Message, r.ReplyDateTime);
-            }
-        }
-
-        public static void RetrieveBooksdWithinQuery(this DynamoDBContext context,
-              string title)
-        {
-            var request = new QueryRequest
-            {
-                TableName = "ProductCatalog",
-                KeyConditions = new Dictionary<string, Condition>
-                {
-                    {
-                        title,
-                        new Condition
-                        {
-                            ComparisonOperator = ComparisonOperator.EQ,
-                            AttributeValueList = new List<AttributeValue>
-                            {
-                                new AttributeValue { N = "1" }
-                            }
-                        }
-                    }
-                }
-            };
-
-            var itemsWithWrongPrice = context.Query<Book>(request);
-
-            Console.WriteLine("\nFindRepliesPostedWithinTimePeriod: Printing result.....");
-
-            foreach (var r in itemsWithWrongPrice)
-            {
-                Console.WriteLine("{0}\t{1}\t{2}\t{3}", r.Id, r.Title, r.Price, r.ISBN);
             }
         }
 
@@ -180,11 +147,11 @@ namespace DynamoDBExample
 
                 if (value == null)
                 {
-                    continue; ;
+                    continue;
                 }
                 var stringValue = value is IList && value.GetType().IsGenericType
                     ? string.Join(", ", ((List<string>)value).Select(primitive => primitive).ToArray())
-                    : value?.ToString();
+                    : value.ToString();
 
                 Console.WriteLine("{0} - {1}", prop.Name, stringValue);
             }

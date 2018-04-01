@@ -20,9 +20,8 @@ namespace DynamoDBExample
                     using (var context = new DynamoDBContext(client))
                     {
                         // Sample queries.
-                        context.FindRepliesInLast3000Days("Amazon DynamoDB", "DynamoDB Thread 1");
+                        context.FindRepliesInLastNDays(3000);
 
-                        //context.RetrieveBooksdWithinQuery("Id");
                         for (var index = 1; index <= 2; index++)
                         {
                             // context.CreateBookItem(index);
