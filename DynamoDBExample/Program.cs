@@ -23,11 +23,13 @@ namespace DynamoDBExample
                         context.RetrieveBook(SampleBookId);
 
                         ////Couple of sample updates.
-                        //productCatalog.UpdateMultipleAttributes(SampleBookId);
-                        //productCatalog.UpdateBookPriceConditionally(SampleBookId);
+                        //context.UpdateMultipleAttributes(SampleBookId);
+                        context.UpdateBookPriceConditionally(SampleBookId);
+
+                        context.RetrieveBook(SampleBookId);
 
                         ////Delete
-                        context.DeleteBook(SampleBookId);
+                        //context.DeleteBook(SampleBookId);
                     }
                 }
 

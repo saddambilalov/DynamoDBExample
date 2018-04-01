@@ -46,62 +46,34 @@ namespace DynamoDBExample
             PrintDocument(book);
         }
 
-        public static void UpdateMultipleAttributes(this Table productCatalog, int sampleBookId)
+        public static void UpdateMultipleAttributes(this DynamoDBContext context, int sampleBookId)
         {
             Console.WriteLine("\n*** Executing UpdateMultipleAttributes() ***");
             Console.WriteLine("\nUpdating multiple attributes....");
             var partitionKey = sampleBookId;
 
-            var book = new Document
+            var book = new Book
             {
-                ["Id"] = partitionKey,
-                ["Authors"] = new List<string> { "Author x", "Author y" },
-                ["newAttribute"] = "New Value",
-                ["ISBN"] = null
+                Id = partitionKey,
+                BookAuthors = new List<string> { "Author x", "Author y" },
+                ISBN = null
             };
-            // List of attribute updates.
-            // The following replaces the existing authors list.
-            // Remove it.
 
-            // Optional parameters.
-            var config = new UpdateItemOperationConfig
-            {
-                // Get updated item in response.
-                ReturnValues = ReturnValues.AllNewAttributes
-            };
-            var updatedBook = productCatalog.UpdateItem(book, config);
+            context.Save(book);
             Console.WriteLine("UpdateMultipleAttributes: Printing item after updates ...");
-            //PrintDocument(updatedBook);
         }
 
-        public static void UpdateBookPriceConditionally(this Table productCatalog, int sampleBookId)
+        public static void UpdateBookPriceConditionally(this DynamoDBContext context, int sampleBookId)
         {
             Console.WriteLine("\n*** Executing UpdateBookPriceConditionally() ***");
 
             var partitionKey = sampleBookId;
 
-            var book = new Document
-            {
-                ["Id"] = partitionKey,
-                ["Price"] = 29.99
-            };
+            var book = context.Load<Book>(partitionKey);
+            book.Price = 29.99;
 
-            // For conditional price update, creating a condition expression.
-            var expr = new Expression
-            {
-                ExpressionStatement = "Price = :val",
-                ExpressionAttributeValues = { [":val"] = 19.99 }
-            };
-
-            // Optional parameters.
-            var config = new UpdateItemOperationConfig
-            {
-                ConditionalExpression = expr,
-                ReturnValues = ReturnValues.AllNewAttributes
-            };
-            var updatedBook = productCatalog.UpdateItem(book, config);
+            context.Save(book);
             Console.WriteLine("UpdateBookPriceConditionally: Printing item whose price was conditionally updated");
-            //PrintDocument(updatedBook);
         }
 
         public static void DeleteBook(this DynamoDBContext context, int sampleBookId)
