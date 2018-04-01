@@ -1,7 +1,6 @@
 ﻿using System;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
-using Amazon.DynamoDBv2.DocumentModel;
 using Amazon.Runtime;
 
 namespace DynamoDBExample
@@ -9,7 +8,6 @@ namespace DynamoDBExample
     public class Program
     {
         private const string TableName = "ProductCatalog";
-        private const int SampleBookId = 555;
 
         private static void Main()
         {
@@ -19,17 +17,19 @@ namespace DynamoDBExample
                 {
                     using (var context = new DynamoDBContext(client))
                     {
-                        context.CreateBookItem(SampleBookId);
-                        context.RetrieveBook(SampleBookId);
+                        context.RetrieveBooksPricedLessThanThirty();
+                        for (var index = 1; index <= 2; index++)
+                        {
+                            //context.CreateBookItem(index);
+                            //context.RetrieveBook(index);
 
-                        ////Couple of sample updates.
-                        //context.UpdateMultipleAttributes(SampleBookId);
-                        context.UpdateBookPriceConditionally(SampleBookId);
+                            //Couple of sample updates.
+                            //context.UpdateMultipleAttributes(index);
+                            //context.UpdateBookPriceConditionally(index);
 
-                        context.RetrieveBook(SampleBookId);
-
-                        ////Delete
-                        //context.DeleteBook(SampleBookId);
+                            //Delete
+                            //context.DeleteBook(index);
+                        }
                     }
                 }
 

@@ -37,13 +37,27 @@ namespace DynamoDBExample
             // Optional configuration.
             var config = new GetItemOperationConfig
             {
-                AttributesToGet = new List<string> { "Id", "ISBN", "Title", "Authors", "Price" },
+                AttributesToGet = new List<string> { "Id", "Title" },
                 ConsistentRead = true
             };
 
             var book = context.Load<Book>(sampleBookId, config);
             Console.WriteLine("RetrieveBook: Printing book retrieved...");
             PrintDocument(book);
+        }
+
+        public static void RetrieveBooksPricedLessThanThirty(this DynamoDBContext context)
+        {
+            const double price = 30;
+            var itemsWithWrongPrice = context.Scan<Book>(
+                new ScanCondition("Price", ScanOperator.LessThan, price),
+                new ScanCondition("PageCount", ScanOperator.Equal, 500)
+            );
+            Console.WriteLine("\nFindProductsPricedLessThanZero: Printing result.....");
+            foreach (var r in itemsWithWrongPrice)
+            {
+                Console.WriteLine("{0}\t{1}\t{2}\t{3}", r.Id, r.Title, r.Price, r.ISBN);
+            }
         }
 
         public static void UpdateMultipleAttributes(this DynamoDBContext context, int sampleBookId)
@@ -93,10 +107,13 @@ namespace DynamoDBExample
         {
             foreach (var prop in book.GetType().GetProperties())
             {
-                string stringValue = null;
                 var value = prop.GetValue(book, null);
 
-                stringValue = value is IList && value.GetType().IsGenericType
+                if (value == null)
+                {
+                    continue; ;
+                }
+                var stringValue = value is IList && value.GetType().IsGenericType
                     ? string.Join(", ", ((List<string>)value).Select(primitive => primitive).ToArray())
                     : value?.ToString();
 
