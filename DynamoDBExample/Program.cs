@@ -20,7 +20,8 @@ namespace DynamoDBExample
                     using (var context = new DynamoDBContext(client))
                     {
                         // Sample queries.
-                        context.FindRepliesInLastNDays(3000);
+                        //context.FindRepliesInLastNDays(3000);
+                        context.FindRepliesPostedWithinTimePeriod(0, 3000);
 
                         for (var index = 1; index <= 2; index++)
                         {

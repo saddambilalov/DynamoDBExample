@@ -96,6 +96,24 @@ namespace DynamoDBExample
             }
         }
 
+        public static void FindRepliesPostedWithinTimePeriod(this DynamoDBContext context, int start, int end)
+        {
+            const string forumId = "Amazon DynamoDB#DynamoDB Thread 1";
+
+            var startDate = DateTime.UtcNow - TimeSpan.FromDays(end);
+            var endDate = DateTime.UtcNow - TimeSpan.FromDays(start);
+
+            var repliesInAPeriod = context.Query<Reply>(forumId,
+                QueryOperator.Between, startDate, endDate);
+
+            Console.WriteLine("\nFindRepliesPostedWithinTimePeriod: Printing result.....");
+
+            foreach (var r in repliesInAPeriod)
+            {
+                Console.WriteLine("{0}\t{1}\t{2}\t{3}", r.Id, r.PostedBy, r.Message, r.ReplyDateTime);
+            }
+        }
+
         public static void UpdateMultipleAttributes(this DynamoDBContext context, int sampleBookId)
         {
             Console.WriteLine("\n*** Executing UpdateMultipleAttributes() ***");
