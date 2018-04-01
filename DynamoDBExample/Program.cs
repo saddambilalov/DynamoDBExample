@@ -15,20 +15,20 @@ namespace DynamoDBExample
         {
             try
             {
-                //new LowLevelTable(Client, TableName).CreateExampleTable();
-
-                //Create
                 using (var client = new AmazonDynamoDBClient())
                 {
-                    client.CreateBookItem(SampleBookId);
-                    //productCatalog.RetrieveBook(SampleBookId);
+                    using (var context = new DynamoDBContext(client))
+                    {
+                        context.CreateBookItem(SampleBookId);
+                        context.RetrieveBook(SampleBookId);
 
-                    ////Couple of sample updates.
-                    //productCatalog.UpdateMultipleAttributes(SampleBookId);
-                    //productCatalog.UpdateBookPriceConditionally(SampleBookId);
+                        ////Couple of sample updates.
+                        //productCatalog.UpdateMultipleAttributes(SampleBookId);
+                        //productCatalog.UpdateBookPriceConditionally(SampleBookId);
 
-                    ////Delete
-                    //productCatalog.DeleteBook(SampleBookId);
+                        ////Delete
+                        context.DeleteBook(SampleBookId);
+                    }
                 }
 
                 Console.WriteLine("To continue, press Enter");

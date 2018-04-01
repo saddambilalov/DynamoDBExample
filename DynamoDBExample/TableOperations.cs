@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.DocumentModel;
 using DynamoDBExample.Models;
@@ -11,7 +11,7 @@ namespace DynamoDBExample
     public static class TableOperations
     {
         // Creates a sample book item.
-        public static void CreateBookItem(this AmazonDynamoDBClient client, int sampleBookId)
+        public static void CreateBookItem(this DynamoDBContext context, int sampleBookId)
         {
             Console.WriteLine("\n*** Executing CreateBookItem() ***");
             var book = new Book
@@ -27,14 +27,11 @@ namespace DynamoDBExample
                 InStock = false,
                 QuantityOnHand = 0
             };
-            using (var context = new DynamoDBContext(client))
-            {
-                context.Save(book);
 
-            }
+            context.Save(book);
         }
 
-        public static void RetrieveBook(this Table productCatalog, int sampleBookId)
+        public static void RetrieveBook(this DynamoDBContext context, int sampleBookId)
         {
             Console.WriteLine("\n*** Executing RetrieveBook() ***");
             // Optional configuration.
@@ -43,9 +40,10 @@ namespace DynamoDBExample
                 AttributesToGet = new List<string> { "Id", "ISBN", "Title", "Authors", "Price" },
                 ConsistentRead = true
             };
-            var document = productCatalog.GetItem(sampleBookId, config);
+
+            var book = context.Load<Book>(sampleBookId, config);
             Console.WriteLine("RetrieveBook: Printing book retrieved...");
-            PrintDocument(document, sampleBookId);
+            PrintDocument(book);
         }
 
         public static void UpdateMultipleAttributes(this Table productCatalog, int sampleBookId)
@@ -73,7 +71,7 @@ namespace DynamoDBExample
             };
             var updatedBook = productCatalog.UpdateItem(book, config);
             Console.WriteLine("UpdateMultipleAttributes: Printing item after updates ...");
-            PrintDocument(updatedBook, sampleBookId);
+            //PrintDocument(updatedBook);
         }
 
         public static void UpdateBookPriceConditionally(this Table productCatalog, int sampleBookId)
@@ -103,10 +101,10 @@ namespace DynamoDBExample
             };
             var updatedBook = productCatalog.UpdateItem(book, config);
             Console.WriteLine("UpdateBookPriceConditionally: Printing item whose price was conditionally updated");
-            PrintDocument(updatedBook, sampleBookId);
+            //PrintDocument(updatedBook);
         }
 
-        public static void DeleteBook(this Table productCatalog, int sampleBookId)
+        public static void DeleteBook(this DynamoDBContext context, int sampleBookId)
         {
             Console.WriteLine("\n*** Executing DeleteBook() ***");
             // Optional configuration.
@@ -115,24 +113,22 @@ namespace DynamoDBExample
                 // Return the deleted item.
                 ReturnValues = ReturnValues.AllOldAttributes
             };
-            var document = productCatalog.DeleteItem(sampleBookId, config);
+            context.Delete<Book>(sampleBookId, config);
             Console.WriteLine("DeleteBook: Printing deleted just deleted...");
-            PrintDocument(document, sampleBookId);
         }
 
-        public static void PrintDocument(Document updatedDocument, int sampleBookId)
+        public static void PrintDocument(Book book)
         {
-            foreach (var attribute in updatedDocument.GetAttributeNames())
+            foreach (var prop in book.GetType().GetProperties())
             {
                 string stringValue = null;
-                var value = updatedDocument[attribute];
-                if (value is Primitive)
-                    stringValue = value.AsPrimitive().Value.ToString();
-                else if (value is PrimitiveList)
-                    stringValue = string.Join(",", (from primitive
-                                    in value.AsPrimitiveList().Entries
-                                                    select primitive.Value).ToArray());
-                Console.WriteLine("{0} - {1}", attribute, stringValue);
+                var value = prop.GetValue(book, null);
+
+                stringValue = value is IList && value.GetType().IsGenericType
+                    ? string.Join(", ", ((List<string>)value).Select(primitive => primitive).ToArray())
+                    : value?.ToString();
+
+                Console.WriteLine("{0} - {1}", prop.Name, stringValue);
             }
         }
     }
